@@ -17,7 +17,7 @@ public class Project {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
-    @Column(nullable = false, length = 40)
+    @Column(nullable = false, length = 40, unique = true)
     private String nombre;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)//NO Queremos proyectos sin usuarios(optional=false)
     @JoinColumn(name = "user_id", nullable = false)//La FK no puede ser null(nullable=false)
