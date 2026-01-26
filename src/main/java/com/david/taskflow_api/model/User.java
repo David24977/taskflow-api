@@ -23,6 +23,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, columnDefinition = "VARCHAR(50)")
     private Role role;
+    //User permitido
     @Column(nullable = false)
     private Boolean enabled = true;
 }

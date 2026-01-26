@@ -5,6 +5,8 @@ import com.david.taskflow_api.dto.TaskResponseDto;
 import com.david.taskflow_api.model.Project;
 import com.david.taskflow_api.model.Task;
 
+import java.util.UUID;
+
 public class TaskMapper {
 
     private TaskMapper(){}
@@ -31,7 +33,7 @@ public class TaskMapper {
                 task.getTitle(),
                 task.getDescription(),
                 task.getProject().getId(),
-                task.getProject().getOwner().getId(),
+                task.getCreatedById().getId(),
                 task.getCreatedAt()
         );
     }

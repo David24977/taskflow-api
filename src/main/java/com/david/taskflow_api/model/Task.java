@@ -27,6 +27,9 @@ public class Task {
     @Column(nullable = false, columnDefinition = "VARCHAR(50)")
     private TaskStatus status;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "created_by_id", nullable = false)
+    private User createdById;//JPA nos da id en tabla, pero es todo el objeto
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
     private LocalDateTime createdAt;

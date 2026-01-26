@@ -8,7 +8,7 @@ public record TaskResponseDto(
         String title,
         String description,
         UUID projectId,
-        UUID userId,
+        UUID createdById,
         LocalDateTime createdAt
 ) {
 }
