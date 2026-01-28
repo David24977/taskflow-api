@@ -3,6 +3,7 @@ package com.david.taskflow_api.service.serviceImpl;
 import com.david.taskflow_api.dto.UpdateUserRequestDto;
 import com.david.taskflow_api.dto.UserRequestDto;
 import com.david.taskflow_api.dto.UserResponseDto;
+import com.david.taskflow_api.exception.UserNotFoundException;
 import com.david.taskflow_api.mapper.UserMapper;
 import com.david.taskflow_api.model.User;
 import com.david.taskflow_api.repository.UserRepository;
@@ -39,7 +40,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponseDto updateUser(UUID id, UpdateUserRequestDto updateUserRequestDto) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
         if(updateUserRequestDto.username() != null){
             user.setUsername(updateUserRequestDto.username());
         }
@@ -54,7 +55,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponseDto deleteUser(UUID id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new IllegalStateException("user not found"));
+                .orElseThrow(() -> new UserNotFoundException("user not found"));
 
         userRepository.delete(user);
         return UserMapper.toMapUserResponse(user);
@@ -63,14 +64,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponseDto findById(UUID id) {
         User user = userRepository.findById(id)
-                .orElseThrow(()-> new IllegalStateException("user not found"));
+                .orElseThrow(()-> new UserNotFoundException("user not found"));
         return UserMapper.toMapUserResponse(user);
     }
 
     @Override
     public UserResponseDto findByUsername(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(()-> new IllegalStateException("user not found"));
+                .orElseThrow(()-> new UserNotFoundException("user not found"));
 
         return UserMapper.toMapUserResponse(user);
     }

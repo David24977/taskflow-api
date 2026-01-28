@@ -3,6 +3,8 @@ package com.david.taskflow_api.service.serviceImpl;
 import com.david.taskflow_api.dto.ProjectAdminResponseDto;
 import com.david.taskflow_api.dto.ProjectRequestDto;
 import com.david.taskflow_api.dto.UpdateProjectRequestDto;
+import com.david.taskflow_api.exception.AccessDeniedException;
+import com.david.taskflow_api.exception.ResourceNotFoundException;
 import com.david.taskflow_api.mapper.ProjectMapper;
 import com.david.taskflow_api.model.Project;
 import com.david.taskflow_api.model.User;
@@ -38,11 +40,8 @@ public class ProjectServiceImpl implements ProjectService {
 
         Project project = ProjectMapper.toProjectEntity(projectRequestDto, owner);
 
-        boolean isAdmin = authService.isCurrentUserAdmin();
-        boolean isOwner = project.getOwner().getId().equals(owner.getId());
-
-        if(!isOwner && !isAdmin){
-            throw new IllegalStateException("Not allowed");
+        if (authService.isCurrentUserGuest()) {
+            throw new AccessDeniedException("Not allowed");
         }
         Project created = projectRepository.save(project);
         return ProjectMapper.toProjectAdminResponseDto(created);
@@ -53,13 +52,13 @@ public class ProjectServiceImpl implements ProjectService {
         User owner = authService.getCurrentUser();
 
         Project project = projectRepository.findById(id)
-                .orElseThrow(()-> new IllegalStateException("project not found"));
+                .orElseThrow(()-> new ResourceNotFoundException("project not found"));
 
         boolean isAdmin = authService.isCurrentUserAdmin();
         boolean isOwner = project.getOwner().getId().equals(owner.getId());
 
         if(!isOwner && !isAdmin){
-            throw new IllegalStateException("Not allowed");
+            throw new AccessDeniedException("Not allowed");
         }
 
         if(updateProjectRequestDto.nombre() != null){
@@ -74,11 +73,11 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectAdminResponseDto deleteProject(UUID id) {
         boolean isAdmin = authService.isCurrentUserAdmin();
         if(!isAdmin){
-            throw new IllegalStateException("Not allowed");
+            throw new AccessDeniedException("Not allowed");
         }
 
         Project project = projectRepository.findById(id)
-                .orElseThrow(()-> new IllegalStateException("project not found"));
+                .orElseThrow(()-> new ResourceNotFoundException("project not found"));
         projectRepository.delete(project);
         return ProjectMapper.toProjectAdminResponseDto(project);
     }
@@ -86,7 +85,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     public ProjectAdminResponseDto findById(UUID id) {
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new IllegalStateException("project not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("project not found"));
         return ProjectMapper.toProjectAdminResponseDto(project);
     }
 

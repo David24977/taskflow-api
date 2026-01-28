@@ -16,6 +16,7 @@ public interface TaskService {
     TaskResponseDto updateTask(UUID id, UpdateTaskRequestDto updateTaskRequestDto);
     TaskResponseDto delete(UUID id);
     TaskResponseDto findByTitle(String title);
+    TaskResponseDto findById(UUID id);
     List<TaskResponseDto> findByProjectId(UUID id);
     List<UserResponseDto> findUsersByProjectId(UUID projectId);
 }

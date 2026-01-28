@@ -4,6 +4,8 @@ import com.david.taskflow_api.dto.TaskRequestDto;
 import com.david.taskflow_api.dto.TaskResponseDto;
 import com.david.taskflow_api.dto.UpdateTaskRequestDto;
 import com.david.taskflow_api.dto.UserResponseDto;
+import com.david.taskflow_api.exception.AccessDeniedException;
+import com.david.taskflow_api.exception.ResourceNotFoundException;
 import com.david.taskflow_api.mapper.TaskMapper;
 import com.david.taskflow_api.mapper.UserMapper;
 import com.david.taskflow_api.model.Project;
@@ -35,7 +37,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public List<TaskResponseDto> tasksList() {
         if (!authService.isCurrentUserAdmin()) {
-            throw new IllegalStateException("Not allowed");
+            throw new AccessDeniedException("Not allowed");
         }
         return taskRepository.findAll()
                 .stream()
@@ -47,14 +49,14 @@ public class TaskServiceImpl implements TaskService {
     public TaskResponseDto createTask(UUID idProject, TaskRequestDto taskRequestDto) {
         User user = authService.getCurrentUser();
         Project project = projectRepository.findById(idProject)
-                .orElseThrow(()-> new IllegalStateException("Project not found"));
+                .orElseThrow(()-> new ResourceNotFoundException("Project not found"));
     //Para ver si tiene permisos de userPropietario o admin para poder crear
         boolean isAdmin = authService.isCurrentUserAdmin();
         boolean isOwner = project.getOwner().getId().equals(user.getId());
         boolean isGuest = authService.isCurrentUserGuest();
 
         if (!isAdmin && !isOwner && !isGuest) {
-            throw new IllegalStateException("Not allowed");
+            throw new AccessDeniedException("Not allowed");
         }
 
 
@@ -74,7 +76,7 @@ public class TaskServiceImpl implements TaskService {
 
         User user = authService.getCurrentUser();
         Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new IllegalStateException("Task not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
 
         //Admin y owner puede actualizar
         boolean isAdmin = authService.isCurrentUserAdmin();
@@ -82,7 +84,7 @@ public class TaskServiceImpl implements TaskService {
 
 
         if(!isOwner && !isAdmin){
-            throw new IllegalStateException("Not allowed");
+            throw new AccessDeniedException("Not allowed");
         }
 
         if(updateTaskRequestDto.title() != null){
@@ -110,14 +112,21 @@ public class TaskServiceImpl implements TaskService {
         boolean isAdmin = authService.isCurrentUserAdmin();
 
         if (!isAdmin) {
-            throw new IllegalStateException("Not allowed");
+            throw new AccessDeniedException("Not allowed");
         }
 
         Task task = taskRepository.findById(id)
-                .orElseThrow(()-> new IllegalStateException("Task not found"));
+                .orElseThrow(()-> new ResourceNotFoundException("Task not found"));
 
         taskRepository.delete(task);
 
+        return TaskMapper.toMapTaskResponseDto(task);
+    }
+
+    @Override
+    public TaskResponseDto findById(UUID id) {
+        Task task = taskRepository.findById(id)
+                .orElseThrow(()-> new ResourceNotFoundException("Task not found"));
         return TaskMapper.toMapTaskResponseDto(task);
     }
 
@@ -129,6 +138,8 @@ public class TaskServiceImpl implements TaskService {
         return TaskMapper.toMapTaskResponseDto(task);
     }
 
+
+
     @Override
     public List<TaskResponseDto> findByProjectId(UUID projectId) {
         return taskRepository.findByProjectId(projectId)
@@ -137,10 +148,11 @@ public class TaskServiceImpl implements TaskService {
                 .toList();
     }
 
+    //Hecha por medio de query HQL, devuelve usuarios con tareas de un proyecto
     @Override
     public List<UserResponseDto> findUsersByProjectId(UUID projectId) {
         if (!authService.isCurrentUserAdmin()) {
-            throw new IllegalStateException("Not allowed");
+            throw new AccessDeniedException("Not allowed");
         }
         return taskRepository.findUsersByProjectId(projectId)
                 .stream()

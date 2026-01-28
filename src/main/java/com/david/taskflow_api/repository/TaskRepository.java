@@ -16,6 +16,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
 //Esta query le dice a Data: No intentes generar la query por el nombre del método.
 //Usa esta query explícita.
     //Lo utilizo porque quiero consultar Task, pero que me devuelva User
+    //Mostrar los usuarios con tareas en un determinado proyecto
     @Query("""
     select distinct t.createdBy
     from Task t
