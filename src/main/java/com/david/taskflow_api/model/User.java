@@ -26,4 +26,8 @@ public class User {
     //User permitido
     @Column(nullable = false)
     private Boolean enabled = true;
+    //Dice si una cuenta está bloqueada o no,
+    // lo debemos poner para cumplir con la interfaz UserDetail de security
+    @Column(nullable = false)
+    private boolean accountNonLocked = true;
 }

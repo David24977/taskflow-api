@@ -18,7 +18,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
     //Lo utilizo porque quiero consultar Task, pero que me devuelva User
     //Mostrar los usuarios con tareas en un determinado proyecto
     @Query("""
-    select distinct t.createdBy
+    select distinct t.createdById
     from Task t
     where t.project.id = :projectId
 """)
