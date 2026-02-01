@@ -1,15 +1,27 @@
 package com.david.taskflow_api.config;
-import io.swagger.v3.oas.annotations.OpenAPIDefinition;
-import io.swagger.v3.oas.annotations.info.Info;
 
-@OpenAPIDefinition(
-        info = @Info(
-                title = "Task Flow API",
-                version = "1.0.0",
-                description = "Spring Boot REST API for managing projects and " +
-                        "tasks with role-based access and JWT authentication"
-        )
-)
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.Components;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
+@Configuration
 public class OpenApiConfig {
+
+        @Bean
+        public OpenAPI openAPI() {
+                return new OpenAPI()
+                        .addSecurityItem(new SecurityRequirement().addList("bearerAuth"))
+                        .components(
+                                new Components().addSecuritySchemes(
+                                        "bearerAuth",
+                                        new SecurityScheme()
+                                                .type(SecurityScheme.Type.HTTP)
+                                                .scheme("bearer")
+                                                .bearerFormat("JWT")
+                                )
+                        );
+        }
 }

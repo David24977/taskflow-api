@@ -1,49 +1,60 @@
 package com.david.taskflow_api.service.auth;
 
+import com.david.taskflow_api.dto.RegisterRequest;
 import com.david.taskflow_api.model.Role;
 import com.david.taskflow_api.model.User;
 import com.david.taskflow_api.repository.UserRepository;
+import com.david.taskflow_api.security.jwt.JwtService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
+    private final UserDetailsService userDetailsService;
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    // Puedes cambiar este nombre por el que vayas a usar como admin
-    private static final String DEFAULT_ADMIN_USERNAME = "admin";
+    @Override
+    public String login(String username, String password) {
 
-    public AuthServiceImpl(UserRepository userRepository) {
-        this.userRepository = userRepository;
+        // 1️. Autenticar credenciales
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(username, password)
+        );
+
+        // 2. Cargar usuario autenticado
+        UserDetails userDetails =
+                userDetailsService.loadUserByUsername(username);
+
+        // 3. Generar JWT
+        return jwtService.generateToken(userDetails);
     }
 
     @Override
-    public User getCurrentUser() {
-        return userRepository.findByUsername(DEFAULT_ADMIN_USERNAME)
-                .orElseThrow(() -> new IllegalStateException(
-                        "Usuario admin por defecto no encontrado. " +
-                                "Asegúrate de crearlo al arrancar la aplicación."
-                ));
-    }
+    public void register(RegisterRequest request) {
 
-    //Evita que en todos lados tengas que hacer: authService.getCurrentUser().getUsername(); Es un helper
-    @Override
-    public String getCurrentUsername() {
+        // 1️⃣ ¿Existe ya el usuario?
+        if (userRepository.existsByUsername(request.username())) {
+            throw new IllegalStateException("User already exists");
+        }
 
-        return getCurrentUser().getUsername();
-    }
-    //Azúcar sintáctico + seguridad semántica
-    //Evita cosas como:
-    //if (authService.getCurrentUser().getRole() == Role.ADMIN) { ... }
-    //Y te permite escribir:if (authService.isCurrentUserAdmin()) { ... }
-    @Override
-    public boolean isCurrentUserAdmin() {
+        // 2️⃣ Crear entidad User
+        User user = new User();
+        user.setUsername(request.username());
+        user.setPassword(passwordEncoder.encode(request.password()));
+        user.setRole(Role.USER);
+        user.setEnabled(true);
 
-        return getCurrentUser().getRole() == Role.ADMIN;
-    }
-
-    @Override
-    public boolean isCurrentUserGuest() {
-        return getCurrentUser().getRole() == Role.GUEST;
+        // 3️⃣ Guardar en BD
+        userRepository.save(user);
     }
 }

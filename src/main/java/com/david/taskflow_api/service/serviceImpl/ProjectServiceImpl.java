@@ -7,10 +7,10 @@ import com.david.taskflow_api.exception.AccessDeniedException;
 import com.david.taskflow_api.exception.ResourceNotFoundException;
 import com.david.taskflow_api.mapper.ProjectMapper;
 import com.david.taskflow_api.model.Project;
+import com.david.taskflow_api.model.Role;
 import com.david.taskflow_api.model.User;
 import com.david.taskflow_api.repository.ProjectRepository;
 import com.david.taskflow_api.service.ProjectService;
-import com.david.taskflow_api.service.auth.AuthService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,13 +18,51 @@ import java.util.UUID;
 
 @Service
 public class ProjectServiceImpl implements ProjectService {
-    private final ProjectRepository projectRepository;
-    private final AuthService authService;
 
-    public ProjectServiceImpl(ProjectRepository projectRepository, AuthService authService) {
+    private final ProjectRepository projectRepository;
+
+    public ProjectServiceImpl(ProjectRepository projectRepository) {
+
         this.projectRepository = projectRepository;
-        this.authService = authService;
     }
+
+    @Override
+    public ProjectAdminResponseDto createProject(User currentUser, ProjectRequestDto projectRequestDto) {
+        if (currentUser.getRole() == Role.GUEST) {
+            throw new AccessDeniedException("Not allowed");
+        }
+
+        Project project = ProjectMapper.toProjectEntity(projectRequestDto, currentUser);
+        Project created = projectRepository.save(project);
+
+        return ProjectMapper.toProjectAdminResponseDto(created);
+    }
+
+    @Override
+    public ProjectAdminResponseDto updateProject(
+            UUID id,
+            UpdateProjectRequestDto dto,
+            User currentUser
+    ) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("project not found"));
+
+        boolean isOwner = project.getOwner().getId().equals(currentUser.getId());
+        boolean isAdmin = currentUser.getRole() == Role.ADMIN;
+
+        if (!isOwner && !isAdmin) {
+            throw new AccessDeniedException("Not allowed");
+        }
+
+        if (dto.nombre() != null) {
+            project.setNombre(dto.nombre());
+        }
+
+        Project update = projectRepository.save(project);
+
+        return ProjectMapper.toProjectAdminResponseDto(update);
+    }
+
 
     @Override
     public List<ProjectAdminResponseDto> listProject() {
@@ -35,49 +73,14 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public ProjectAdminResponseDto createProject(ProjectRequestDto projectRequestDto) {
-        User owner = authService.getCurrentUser();
-
-        Project project = ProjectMapper.toProjectEntity(projectRequestDto, owner);
-
-        if (authService.isCurrentUserGuest()) {
-            throw new AccessDeniedException("Not allowed");
-        }
-        Project created = projectRepository.save(project);
-        return ProjectMapper.toProjectAdminResponseDto(created);
-    }
-
-    @Override
-    public ProjectAdminResponseDto updateProject(UUID id, UpdateProjectRequestDto updateProjectRequestDto) {
-        User owner = authService.getCurrentUser();
-
-        Project project = projectRepository.findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException("project not found"));
-
-        boolean isAdmin = authService.isCurrentUserAdmin();
-        boolean isOwner = project.getOwner().getId().equals(owner.getId());
-
-        if(!isOwner && !isAdmin){
-            throw new AccessDeniedException("Not allowed");
-        }
-
-        if(updateProjectRequestDto.nombre() != null){
-            project.setNombre(updateProjectRequestDto.nombre());
-        }
-
-        Project update = projectRepository.save(project);
-        return ProjectMapper.toProjectAdminResponseDto(update);
-    }
-
-    @Override
-    public ProjectAdminResponseDto deleteProject(UUID id) {
-        boolean isAdmin = authService.isCurrentUserAdmin();
-        if(!isAdmin){
+    public ProjectAdminResponseDto deleteProject(UUID id, User currentUser) {
+        boolean isAdmin = currentUser.getRole() == Role.ADMIN;
+        if (!isAdmin) {
             throw new AccessDeniedException("Not allowed");
         }
 
         Project project = projectRepository.findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException("project not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("project not found"));
         projectRepository.delete(project);
         return ProjectMapper.toProjectAdminResponseDto(project);
     }
@@ -91,8 +94,8 @@ public class ProjectServiceImpl implements ProjectService {
 
     //Este método es para el user, que entra con su username y contraseña
     @Override
-    public List<ProjectAdminResponseDto> findProjectsByCurrentUser() {
-        UUID ownerId = authService.getCurrentUser().getId();
+    public List<ProjectAdminResponseDto> findProjectsByCurrentUser(User currentUser) {
+        UUID ownerId = currentUser.getId();
 
         return projectRepository.findByOwnerId(ownerId)
                 .stream()
@@ -110,4 +113,6 @@ public class ProjectServiceImpl implements ProjectService {
                 .map(ProjectMapper::toProjectAdminResponseDto)
                 .toList();
     }
+
 }
+

@@ -12,7 +12,7 @@ public class TaskMapper {
     private TaskMapper(){}
 
     //DTO->ENTITY
-    public static Task toTaskEntity(TaskRequestDto taskRequestDto, Project project){
+    public static Task toTaskEntity(Project project, TaskRequestDto taskRequestDto){
 
         Task task = new Task();
 

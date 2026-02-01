@@ -1,22 +1,12 @@
 package com.david.taskflow_api.service.auth;
 
-import com.david.taskflow_api.model.User;
+import com.david.taskflow_api.dto.RegisterRequest;
 
 public interface AuthService {
     /**
-     * Devuelve el usuario actualmente autenticado.
-     * En la versión DEV, será siempre el admin.
+     * Autentica al usuario y devuelve un JWT.
      */
-    User getCurrentUser();
+    String login(String username, String password);
 
-    /**
-     * Atajo para obtener solo el username actual.
-     */
-    String getCurrentUsername();
-
-    /**
-     * Atajo para saber si el usuario actual es ADMIN.
-     */
-    boolean isCurrentUserAdmin();
-    boolean isCurrentUserGuest();
+    void register(RegisterRequest request);
 }

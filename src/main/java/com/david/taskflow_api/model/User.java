@@ -18,7 +18,7 @@ public class User {
     private UUID id;
     @Column(nullable = false, length = 50, unique = true)
     private String username;
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false)
     private String password;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, columnDefinition = "VARCHAR(50)")
